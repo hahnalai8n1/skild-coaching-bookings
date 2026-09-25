@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:rls": "node scripts/verify-rls.mjs"
+    "test:rls": "node scripts/verify-rls.mjs",
+    "test:db": "vitest run supabase/tests"
   },
   "dependencies": {
     "@supabase/ssr": "^0.7.0",
@@ -22,6 +23,7 @@
     "zod": "^4.1.0"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
     "@eslint/eslintrc": "^3.3.1",
     "@tailwindcss/postcss": "^4.1.0",
     "@types/node": "^22.0.0",

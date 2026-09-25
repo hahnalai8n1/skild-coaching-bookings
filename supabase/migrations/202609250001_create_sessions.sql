@@ -3,7 +3,7 @@
 
 create table public.sessions (
   id uuid primary key default gen_random_uuid(),
-  coach_id uuid not null default (select auth.uid()) references auth.users(id) on delete cascade,
+  coach_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
   title text not null check (char_length(btrim(title)) between 2 and 80),
   starts_at timestamptz not null,
   ends_at timestamptz not null,

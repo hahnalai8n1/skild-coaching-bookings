@@ -77,6 +77,42 @@ try {
   });
   assert(Boolean(forgedOwnerError), "Coach B cannot create a session owned by Coach A");
 
+  const { data: cancelledByB, error: cancelByBError } = await coachB.client
+    .from("sessions")
+    .update({ status: "cancelled" })
+    .eq("id", created.id)
+    .select("id");
+  if (cancelByBError) throw cancelByBError;
+  assert(cancelledByB.length === 0, "Coach B cannot cancel Coach A's session");
+
+  const { error: deleteByBError } = await coachB.client.from("sessions").delete().eq("id", created.id);
+  const { error: deleteByAError } = await coachA.client.from("sessions").delete().eq("id", created.id);
+  assert(Boolean(deleteByBError) && Boolean(deleteByAError), "no coach can hard-delete a session, including its owner");
+
+  const { error: transferError } = await coachA.client
+    .from("sessions")
+    .update({ coach_id: coachB.id })
+    .eq("id", created.id);
+  assert(Boolean(transferError), "Coach A cannot transfer a session to Coach B");
+
+  const { error: anonReadError } = await coachClient().from("sessions").select("id");
+  assert(Boolean(anonReadError), "signed-out visitors cannot query sessions");
+
+  const { data: cancelled, error: cancelError } = await coachA.client
+    .from("sessions")
+    .update({ status: "cancelled" })
+    .eq("id", created.id)
+    .select("cancelled_at")
+    .single();
+  if (cancelError) throw cancelError;
+  assert(Boolean(cancelled.cancelled_at), "Coach A can cancel their own session and the time is recorded");
+
+  const { error: editCancelledError } = await coachA.client
+    .from("sessions")
+    .update({ title: "Edited after cancelling" })
+    .eq("id", created.id);
+  assert(Boolean(editCancelledError), "a cancelled session cannot be edited or reinstated");
+
   console.log("\nRLS verification passed: coach data is isolated at the database layer.");
 } catch (error) {
   console.error(`\nRLS verification failed: ${error instanceof Error ? error.message : String(error)}`);
