@@ -6,6 +6,17 @@ A coaching-session app built for the SKILD technical task. Coaches sign up, sign
 
 [![CI](https://github.com/hahnalai8n1/skild-coaching-bookings/actions/workflows/ci.yml/badge.svg)](https://github.com/hahnalai8n1/skild-coaching-bookings/actions/workflows/ci.yml)
 
+## Try it
+
+**Live demo:** https://skild-coaching-bookings.vercel.app
+
+| Account | Email | Password |
+| --- | --- | --- |
+| Coach Alice | `coach-alice@acme-test.dev` | `password123` |
+| Coach Bob | `coach-bob@acme-test.dev` | `password123` |
+
+To see the isolation, sign in as Alice and create a session, then open its edit page and copy the URL. Sign in as Bob and paste the URL: Bob gets "Session not found", and Alice's session doesn't appear in his dashboard. You can also sign up as a new coach.
+
 ## Requirements checklist
 
 | Requirement | Where it lives | How it is verified |
