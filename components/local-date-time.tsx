@@ -1,6 +1,15 @@
 "use client";
 
+import { useIsClient } from "@/lib/use-is-client";
+
 export function LocalDateTime({ startsAt, endsAt }: { startsAt: string; endsAt: string }) {
+  const isClient = useIsClient();
+
+  // Formatting needs the viewer's timezone, which only the browser knows.
+  if (!isClient) {
+    return <span className="inline-block h-4 w-44 animate-pulse rounded bg-[#eceff6] align-middle" aria-hidden="true" />;
+  }
+
   const start = new Date(startsAt);
   const end = new Date(endsAt);
   const date = new Intl.DateTimeFormat("en-AU", {
@@ -15,8 +24,8 @@ export function LocalDateTime({ startsAt, endsAt }: { startsAt: string; endsAt: 
     .find((part) => part.type === "timeZoneName")?.value;
 
   return (
-    <span suppressHydrationWarning>
+    <time dateTime={startsAt}>
       {date} · {time.format(start)}–{time.format(end)} {timezone}
-    </span>
+    </time>
   );
 }

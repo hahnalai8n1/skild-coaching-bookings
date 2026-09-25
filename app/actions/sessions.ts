@@ -6,6 +6,18 @@ import { sessionInputFromFormData, sessionSchema } from "@/lib/session-schema";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionState } from "@/lib/types";
 
+// Lifecycle rules live in the database (see the 0002 migration); translate the
+// ones a coach can realistically hit into plain language.
+function lifecycleMessage(error: { message: string } | null, fallback: string) {
+  if (error?.message.includes("Cancelled sessions cannot be changed")) {
+    return "This session has been cancelled, so it can no longer be changed.";
+  }
+  if (error?.message.includes("already finished")) {
+    return "This session has already finished, so it can't be cancelled.";
+  }
+  return fallback;
+}
+
 async function authenticatedCoach() {
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getUser();
@@ -73,7 +85,10 @@ export async function updateSessionAction(
     .maybeSingle();
 
   if (error || !data) {
-    return { status: "error", message: "This session could not be updated. It may no longer be available." };
+    return {
+      status: "error",
+      message: lifecycleMessage(error, "This session could not be updated. It may no longer be available."),
+    };
   }
 
   revalidatePath("/dashboard");
@@ -95,7 +110,7 @@ export async function cancelSessionAction(sessionId: string): Promise<{ error?: 
     .maybeSingle();
 
   if (error || !data) {
-    return { error: "This session could not be cancelled." };
+    return { error: lifecycleMessage(error, "This session could not be cancelled.") };
   }
 
   revalidatePath("/dashboard");

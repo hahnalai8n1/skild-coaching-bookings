@@ -4,7 +4,7 @@ import { SessionForm } from "@/components/session-form";
 import { SetupRequired } from "@/components/setup-required";
 import { hasSupabaseEnv } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
-import type { CoachingSession } from "@/lib/types";
+import { SESSION_COLUMNS, type CoachingSession } from "@/lib/types";
 
 export default async function EditSessionPage({ params }: { params: Promise<{ id: string }> }) {
   if (!hasSupabaseEnv()) return <main className="grid min-h-screen place-items-center bg-[#f7f8fc] px-5"><SetupRequired /></main>;
@@ -15,7 +15,7 @@ export default async function EditSessionPage({ params }: { params: Promise<{ id
 
   const { data, error } = await supabase
     .from("sessions")
-    .select("id, coach_id, title, starts_at, ends_at, location, notes, status, created_at, updated_at")
+    .select(SESSION_COLUMNS)
     .eq("id", id)
     .maybeSingle();
 

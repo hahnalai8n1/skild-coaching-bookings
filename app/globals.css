@@ -291,6 +291,7 @@ a {
 }
 
 .status-scheduled { background: #e9f7f0; color: #287253; }
+.status-completed { background: #ecf3ff; color: #174f9e; }
 .status-cancelled { background: #eceef2; color: #747a8a; }
 
 .session-action {

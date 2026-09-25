@@ -6,7 +6,8 @@ import { SessionCard } from "@/components/session-card";
 import { SetupRequired } from "@/components/setup-required";
 import { hasSupabaseEnv } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
-import type { CoachingSession } from "@/lib/types";
+import { groupSessions, sessionPhase } from "@/lib/session-groups";
+import { SESSION_COLUMNS, type CoachingSession } from "@/lib/types";
 
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ notice?: string }> }) {
   if (!hasSupabaseEnv()) {
@@ -19,16 +20,14 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
   const { data, error } = await supabase
     .from("sessions")
-    .select("id, coach_id, title, starts_at, ends_at, location, notes, status, created_at, updated_at")
+    .select(SESSION_COLUMNS)
     .order("starts_at", { ascending: true });
 
   if (error) throw new Error("Unable to load coaching sessions.");
 
   const sessions = (data ?? []) as CoachingSession[];
-  const now = new Date().toISOString();
-  const scheduled = sessions.filter((session) => session.status === "scheduled");
-  const upcoming = scheduled.filter((session) => session.starts_at >= now);
-  const cancelled = sessions.filter((session) => session.status === "cancelled");
+  const now = new Date();
+  const { upcoming, history, counts } = groupSessions(sessions, now);
   const { notice } = await searchParams;
 
   return (
@@ -53,25 +52,30 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         </div>
 
         <section className="mt-9 grid gap-4 sm:grid-cols-3" aria-label="Session summary">
-          <Metric label="Upcoming" value={upcoming.length} icon={<CalendarClock size={19} />} tone="blue" />
-          <Metric label="Scheduled" value={scheduled.length} icon={<CalendarCheck2 size={19} />} tone="green" />
-          <Metric label="Cancelled" value={cancelled.length} icon={<History size={19} />} tone="grey" />
+          <Metric label="Upcoming" value={counts.upcoming} icon={<CalendarClock size={19} />} tone="blue" />
+          <Metric label="Completed" value={counts.completed} icon={<CalendarCheck2 size={19} />} tone="green" />
+          <Metric label="Cancelled" value={counts.cancelled} icon={<History size={19} />} tone="grey" />
         </section>
 
-        <section className="mt-10">
-          <div className="mb-4 flex items-center justify-between gap-4">
-            <h2 className="text-lg font-extrabold tracking-[-0.02em] text-[#252a42]">All sessions</h2>
-            <span className="text-sm font-medium text-[#858b9d]">{sessions.length} total</span>
-          </div>
-
-          {sessions.length > 0 ? (
+        <section className="mt-10" aria-labelledby="upcoming-heading">
+          <SectionHeading id="upcoming-heading" title="Upcoming" count={upcoming.length} />
+          {upcoming.length > 0 ? (
             <div className="space-y-3">
-              {sessions.map((session) => <SessionCard key={session.id} session={session} />)}
+              {upcoming.map((session) => <SessionCard key={session.id} session={session} phase="upcoming" />)}
             </div>
           ) : (
-            <EmptyState />
+            <EmptyState hasHistory={history.length > 0} />
           )}
         </section>
+
+        {history.length > 0 ? (
+          <section className="mt-12" aria-labelledby="history-heading">
+            <SectionHeading id="history-heading" title="Past & cancelled" count={history.length} />
+            <div className="space-y-3">
+              {history.map((session) => <SessionCard key={session.id} session={session} phase={sessionPhase(session, now)} />)}
+            </div>
+          </section>
+        ) : null}
       </main>
     </div>
   );
@@ -89,13 +93,26 @@ function Metric({ label, value, icon, tone }: { label: string; value: number; ic
   );
 }
 
-function EmptyState() {
+function SectionHeading({ id, title, count }: { id: string; title: string; count: number }) {
+  return (
+    <div className="mb-4 flex items-center justify-between gap-4">
+      <h2 id={id} className="text-lg font-extrabold tracking-[-0.02em] text-[#252a42]">{title}</h2>
+      <span className="text-sm font-medium text-[#858b9d]">{count} {count === 1 ? "session" : "sessions"}</span>
+    </div>
+  );
+}
+
+function EmptyState({ hasHistory }: { hasHistory: boolean }) {
   return (
     <div className="rounded-3xl border border-dashed border-[#ccd2e3] bg-white px-6 py-16 text-center">
       <span className="mx-auto grid size-12 place-items-center rounded-2xl bg-[#eef4ff] text-[#174f9e]"><CalendarCheck2 size={22} /></span>
       <h3 className="mt-5 text-lg font-extrabold text-[#252a42]">Your schedule is clear</h3>
-      <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-[#747b8f]">Create your first session to keep its time, location and notes in one place.</p>
-      <Link href="/sessions/new" className="button button-primary mt-6"><CirclePlus size={17} /> Create first session</Link>
+      <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-[#747b8f]">
+        {hasHistory
+          ? "Nothing coming up. Add your next session when you're ready."
+          : "Create your first session to keep its time, location and notes in one place."}
+      </p>
+      <Link href="/sessions/new" className="button button-primary mt-6"><CirclePlus size={17} /> {hasHistory ? "Create session" : "Create first session"}</Link>
     </div>
   );
 }

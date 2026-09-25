@@ -1,11 +1,19 @@
 import Link from "next/link";
 import { CalendarDays, MapPin, PencilLine } from "lucide-react";
+import type { SessionPhase } from "@/lib/session-groups";
 import type { CoachingSession } from "@/lib/types";
 import { CancelSessionButton } from "./cancel-session-button";
 import { LocalDateTime } from "./local-date-time";
 
-export function SessionCard({ session }: { session: CoachingSession }) {
-  const isCancelled = session.status === "cancelled";
+const BADGES: Record<SessionPhase, { label: string; className: string }> = {
+  upcoming: { label: "Scheduled", className: "status-scheduled" },
+  completed: { label: "Completed", className: "status-completed" },
+  cancelled: { label: "Cancelled", className: "status-cancelled" },
+};
+
+export function SessionCard({ session, phase }: { session: CoachingSession; phase: SessionPhase }) {
+  const isCancelled = phase === "cancelled";
+  const badge = BADGES[phase];
 
   return (
     <article className={`session-card ${isCancelled ? "session-card-cancelled" : ""}`}>
@@ -16,9 +24,7 @@ export function SessionCard({ session }: { session: CoachingSession }) {
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="truncate font-bold tracking-[-0.01em] text-[#20253d]">{session.title}</h3>
-            <span className={`status-badge ${isCancelled ? "status-cancelled" : "status-scheduled"}`}>
-              {isCancelled ? "Cancelled" : "Scheduled"}
-            </span>
+            <span className={`status-badge ${badge.className}`}>{badge.label}</span>
           </div>
           <p className="mt-1.5 text-sm font-medium text-[#5d657b]">
             <LocalDateTime startsAt={session.starts_at} endsAt={session.ends_at} />
@@ -38,7 +44,7 @@ export function SessionCard({ session }: { session: CoachingSession }) {
           <Link href={`/sessions/${session.id}/edit`} className="session-action">
             <PencilLine aria-hidden="true" size={15} /> Edit
           </Link>
-          <CancelSessionButton sessionId={session.id} />
+          {phase === "upcoming" ? <CancelSessionButton sessionId={session.id} /> : null}
         </div>
       )}
     </article>

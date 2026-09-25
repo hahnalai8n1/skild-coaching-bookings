@@ -5,6 +5,7 @@ import { useActionState, useState } from "react";
 import { CalendarClock, Clock3, MapPin, NotebookPen } from "lucide-react";
 import { createSessionAction, updateSessionAction } from "@/app/actions/sessions";
 import { INITIAL_ACTION_STATE, type CoachingSession } from "@/lib/types";
+import { useIsClient } from "@/lib/use-is-client";
 import { SubmitButton } from "./submit-button";
 
 type SessionFormProps =
@@ -27,8 +28,13 @@ function toUtcIso(localValue: string) {
 export function SessionForm({ mode, session }: SessionFormProps) {
   const action = mode === "create" ? createSessionAction : updateSessionAction.bind(null, session.id);
   const [state, formAction] = useActionState(action, INITIAL_ACTION_STATE);
-  const [startsAtLocal, setStartsAtLocal] = useState(toLocalInput(session?.starts_at));
-  const [endsAtLocal, setEndsAtLocal] = useState(toLocalInput(session?.ends_at));
+  // The saved UTC instants are converted to the viewer's local time, which is only
+  // known in the browser. Until the coach edits a field, derive it after hydration.
+  const isClient = useIsClient();
+  const [startsAtEdited, setStartsAtLocal] = useState<string | null>(null);
+  const [endsAtEdited, setEndsAtLocal] = useState<string | null>(null);
+  const startsAtLocal = startsAtEdited ?? (isClient ? toLocalInput(session?.starts_at) : "");
+  const endsAtLocal = endsAtEdited ?? (isClient ? toLocalInput(session?.ends_at) : "");
 
   return (
     <form action={formAction} className="space-y-6" noValidate>
