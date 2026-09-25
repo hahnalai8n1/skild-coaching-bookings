@@ -20,31 +20,33 @@ function parseCredentials(formData: FormData) {
 }
 
 export async function signInAction(_state: ActionState, formData: FormData): Promise<ActionState> {
+  const values = { email: String(formData.get("email") ?? "") };
   if (!hasSupabaseEnv()) {
-    return { status: "error", message: "Supabase is not configured yet. Follow the README setup steps first." };
+    return { status: "error", values, message: "Supabase is not configured yet. Follow the README setup steps first." };
   }
   const parsed = parseCredentials(formData);
   if (!parsed.success) {
-    return { status: "error", message: "Check the highlighted fields.", fieldErrors: parsed.error.flatten().fieldErrors };
+    return { status: "error", values, message: "Check the highlighted fields.", fieldErrors: parsed.error.flatten().fieldErrors };
   }
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
 
   if (error) {
-    return { status: "error", message: error.message };
+    return { status: "error", values, message: error.message };
   }
 
   redirect("/dashboard");
 }
 
 export async function signUpAction(_state: ActionState, formData: FormData): Promise<ActionState> {
+  const values = { email: String(formData.get("email") ?? "") };
   if (!hasSupabaseEnv()) {
-    return { status: "error", message: "Supabase is not configured yet. Follow the README setup steps first." };
+    return { status: "error", values, message: "Supabase is not configured yet. Follow the README setup steps first." };
   }
   const parsed = parseCredentials(formData);
   if (!parsed.success) {
-    return { status: "error", message: "Check the highlighted fields.", fieldErrors: parsed.error.flatten().fieldErrors };
+    return { status: "error", values, message: "Check the highlighted fields.", fieldErrors: parsed.error.flatten().fieldErrors };
   }
 
   const headerStore = await headers();
@@ -56,7 +58,7 @@ export async function signUpAction(_state: ActionState, formData: FormData): Pro
   });
 
   if (error) {
-    return { status: "error", message: error.message };
+    return { status: "error", values, message: error.message };
   }
 
   if (data.session) {

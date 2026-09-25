@@ -54,7 +54,7 @@ export function SessionForm({ mode, session }: SessionFormProps) {
           <input
             id="title"
             name="title"
-            defaultValue={session?.title}
+            defaultValue={state.values?.title ?? session?.title}
             placeholder="e.g. Private skills session"
             maxLength={80}
             autoFocus
@@ -105,7 +105,7 @@ export function SessionForm({ mode, session }: SessionFormProps) {
         <label htmlFor="location">Location <span className="font-normal text-[#969caf]">Optional</span></label>
         <div className="input-with-icon">
           <MapPin aria-hidden="true" size={18} />
-          <input id="location" name="location" defaultValue={session?.location ?? ""} placeholder="Court, field or meeting link" maxLength={120} />
+          <input id="location" name="location" defaultValue={state.values?.location ?? session?.location ?? ""} placeholder="Court, field or meeting link" maxLength={120} />
         </div>
         <FieldError messages={state.fieldErrors?.location} />
       </div>
@@ -115,7 +115,7 @@ export function SessionForm({ mode, session }: SessionFormProps) {
         <textarea
           id="notes"
           name="notes"
-          defaultValue={session?.notes ?? ""}
+          defaultValue={state.values?.notes ?? session?.notes ?? ""}
           placeholder="Preparation, focus areas or anything you need to remember…"
           rows={5}
           maxLength={1000}

@@ -18,6 +18,14 @@ function lifecycleMessage(error: { message: string } | null, fallback: string) {
   return fallback;
 }
 
+function submittedValues(formData: FormData): ActionState["values"] {
+  return {
+    title: String(formData.get("title") ?? ""),
+    location: String(formData.get("location") ?? ""),
+    notes: String(formData.get("notes") ?? ""),
+  };
+}
+
 async function authenticatedCoach() {
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getUser();
@@ -28,14 +36,15 @@ async function authenticatedCoach() {
 }
 
 export async function createSessionAction(_state: ActionState, formData: FormData): Promise<ActionState> {
+  const values = submittedValues(formData);
   const parsed = sessionSchema.safeParse(sessionInputFromFormData(formData));
   if (!parsed.success) {
-    return { status: "error", message: "Check the highlighted fields.", fieldErrors: parsed.error.flatten().fieldErrors };
+    return { status: "error", values, message: "Check the highlighted fields.", fieldErrors: parsed.error.flatten().fieldErrors };
   }
 
   const { supabase, user } = await authenticatedCoach();
   if (!user) {
-    return { status: "error", message: "Your session expired. Sign in and try again." };
+    return { status: "error", values, message: "Your session expired. Sign in and try again." };
   }
 
   const { error } = await supabase.from("sessions").insert({
@@ -48,7 +57,7 @@ export async function createSessionAction(_state: ActionState, formData: FormDat
   });
 
   if (error) {
-    return { status: "error", message: "We could not create the session. Please try again." };
+    return { status: "error", values, message: "We could not create the session. Please try again." };
   }
 
   revalidatePath("/dashboard");
@@ -60,14 +69,15 @@ export async function updateSessionAction(
   _state: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  const values = submittedValues(formData);
   const parsed = sessionSchema.safeParse(sessionInputFromFormData(formData));
   if (!parsed.success) {
-    return { status: "error", message: "Check the highlighted fields.", fieldErrors: parsed.error.flatten().fieldErrors };
+    return { status: "error", values, message: "Check the highlighted fields.", fieldErrors: parsed.error.flatten().fieldErrors };
   }
 
   const { supabase, user } = await authenticatedCoach();
   if (!user) {
-    return { status: "error", message: "Your session expired. Sign in and try again." };
+    return { status: "error", values, message: "Your session expired. Sign in and try again." };
   }
 
   const { data, error } = await supabase
@@ -87,6 +97,7 @@ export async function updateSessionAction(
   if (error || !data) {
     return {
       status: "error",
+      values,
       message: lifecycleMessage(error, "This session could not be updated. It may no longer be available."),
     };
   }

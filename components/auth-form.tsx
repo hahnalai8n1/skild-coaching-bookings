@@ -21,7 +21,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
 
       <div className="field-group">
         <label htmlFor="email">Email address</label>
-        <input id="email" name="email" type="email" autoComplete="email" placeholder="coach@example.com" required />
+        <input id="email" name="email" type="email" defaultValue={state.values?.email} autoComplete="email" placeholder="coach@example.com" required />
         <FieldError messages={state.fieldErrors?.email} />
       </div>
 

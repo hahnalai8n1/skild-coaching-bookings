@@ -21,6 +21,8 @@ export type ActionState = {
   status: "idle" | "error";
   message?: string;
   fieldErrors?: Partial<Record<"email" | "password" | "title" | "startsAt" | "endsAt" | "location" | "notes", string[]>>;
+  /** Text the user submitted, echoed back so a failed submit doesn't wipe the form. Never includes passwords. */
+  values?: Partial<Record<"email" | "title" | "location" | "notes", string>>;
 };
 
 export const INITIAL_ACTION_STATE: ActionState = { status: "idle" };
