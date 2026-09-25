@@ -1,4 +1,4 @@
-# Coachdesk
+# Coachdesk — SKILD coaching bookings task
 
 A coaching-session app built for the SKILD technical task. Coaches sign up, sign in, and create, view, edit and cancel their own sessions. Data lives in Supabase (PostgreSQL).
 
